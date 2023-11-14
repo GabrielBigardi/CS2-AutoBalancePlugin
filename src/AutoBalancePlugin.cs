@@ -9,7 +9,7 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.2.1";
+    public override string ModuleVersion => "0.2.2";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
