@@ -1,14 +1,22 @@
-﻿using CounterStrikeSharp.API;
+﻿//TODO: add shuffling
+
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AutoBalancePlugin;
 
-public class AutoBalancePlugin : BasePlugin
+public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
     public override string ModuleVersion => "0.1.0";
     public override string ModuleAuthor => "hTx";
+    
+    public AutoBalancePluginConfig Config { get; set; } = new();
+
+    private bool _scrambleMode;
+    private char _pluginNameColor;
+    private char _pluginMessageColor;
 
     public override void Load(bool hotReload)
     {
@@ -21,6 +29,16 @@ public class AutoBalancePlugin : BasePlugin
         LogToConsole(ConsoleColor.Green, $"{ModuleName} version {ModuleVersion} unloaded");
     }
     
+    public void OnConfigParsed(AutoBalancePluginConfig config)
+    {
+        LogToConsole(ConsoleColor.Green, $"Loading config file");
+        
+        this.Config = config;
+        this._scrambleMode = config.ScrambleMode;
+        this._pluginNameColor = config.PluginNameColor;
+        this._pluginMessageColor = config.PluginMessageColor;
+    }
+    
     private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
         LogToConsole(ConsoleColor.Green, $"New round started, fetching players");
@@ -28,6 +46,17 @@ public class AutoBalancePlugin : BasePlugin
         
         if (players.Count <= 0)
             return HookResult.Continue;
+        
+        if (_scrambleMode)
+        {
+            var shuffledPlayersList = players.OrderBy(a => Guid.NewGuid()).ToList();
+            for (int i = 0; i < shuffledPlayersList.Count; i++)
+            {
+                shuffledPlayersList[i].ChangeTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
+            }
+
+            return HookResult.Continue;
+        }
 
         var ctPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.CounterTerrorist);
         var trPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.Terrorist);
@@ -53,9 +82,10 @@ public class AutoBalancePlugin : BasePlugin
                     : CsTeam.Terrorist;
                 
                 playerToSend.ChangeTeam(teamToSend);
+                LogToChatAll($"Changed \"{playerToSend.PlayerName}\" to {(CsTeam)playerToSend.TeamNum}");
             }
         }
-
+        
         return HookResult.Continue;
     }
 
@@ -74,5 +104,10 @@ public class AutoBalancePlugin : BasePlugin
     private void LogToChat(CCSPlayerController? player, string messageToLog)
     {
         player?.PrintToChat($"[{ModuleName}] -> {messageToLog}");
+    }
+    
+    private void LogToChatAll(string messageToLog)
+    {
+        Server.PrintToChatAll($" {_pluginNameColor}● [{ModuleName}] {ChatColors.Default} -> {_pluginMessageColor}{messageToLog}");
     }
 }
