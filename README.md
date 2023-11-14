@@ -45,6 +45,8 @@ Currently there is two balancing modes, they are:
 {
   "ScrambleMode": false, // Setting that to true will make teams scramble upon auto-balance, good for retake servers
   "KillPlayerOnSwitch": false, // Setting that to true will make player get killed when being switched
+  "BalanceOnRoundStart": false, // Setting that to true will make the auto-balance happen upon round start (default: on round end)
+  "MaximumAllowedDifference": 1 // Maximum players difference for the auto-balance to start working
   "PluginNameColor": "\u0010", // Unicode color for Plugin Name on chat messages
   "PluginMessageColor": "\u0004", // Unicode color for Plugin Message on chat messages
   "ConfigVersion": 1 // Config version, don't change

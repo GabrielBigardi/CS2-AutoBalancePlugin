@@ -10,6 +10,12 @@ public class AutoBalancePluginConfig : BasePluginConfig
     [JsonPropertyName("KillPlayerOnSwitch")]
     public bool KillPlayerOnSwitch { get; set; } = false;
     
+    [JsonPropertyName("BalanceOnRoundStart")]
+    public bool BalanceOnRoundStart { get; set; } = false;
+    
+    [JsonPropertyName("MaximumAllowedDifference")]
+    public int MaximumAllowedDifference { get; set; } = 1;
+    
     [JsonPropertyName("PluginNameColor")]
     public char PluginNameColor { get; set; } = '\u0010';
     

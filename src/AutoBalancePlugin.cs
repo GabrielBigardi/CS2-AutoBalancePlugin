@@ -16,12 +16,18 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
 
     private bool _scrambleMode;
     private bool _killPlayerOnSwitch;
+    private bool _balanceOnRoundStart;
+    private int _maximumAllowedDifference;
     private char _pluginNameColor;
     private char _pluginMessageColor;
 
     public override void Load(bool hotReload)
     {
-        RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+        if(_balanceOnRoundStart)
+            RegisterEventHandler<EventRoundStart>(OnRoundStart);
+        else
+            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+
         LogToConsole(ConsoleColor.Green, $"{ModuleName} version {ModuleVersion} loaded");
     }
 
@@ -37,17 +43,35 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         this.Config = config;
         this._scrambleMode = config.ScrambleMode;
         this._killPlayerOnSwitch = config.KillPlayerOnSwitch;
+        this._balanceOnRoundStart = config.BalanceOnRoundStart;
+        this._maximumAllowedDifference = config.MaximumAllowedDifference;
         this._pluginNameColor = config.PluginNameColor;
         this._pluginMessageColor = config.PluginMessageColor;
     }
     
     private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        LogToConsole(ConsoleColor.Green, $"New round started, fetching players");
+        LogToConsole(ConsoleColor.Green, $"Round ended, trying auto-balance");
+        TryAutoBalance();
+
+        return HookResult.Continue;
+    }
+
+    private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        LogToConsole(ConsoleColor.Green, $"Round started, trying auto-balance");
+
+        TryAutoBalance();
+
+        return HookResult.Continue;
+    }
+
+    private bool TryAutoBalance()
+    {
         var players = Utilities.GetPlayers();
         
         if (players.Count <= 0)
-            return HookResult.Continue;
+            return false;
 
         var currentlyPlaying = 
             players.FindAll(x => x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist);
@@ -63,16 +87,15 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
                     shuffledPlayersList[i].SwitchTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
             }
 
-            return HookResult.Continue;
+            return true;
         }
 
         var ctPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.CounterTerrorist);
         var trPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.Terrorist);
 
         var difference = Math.Abs(ctPlayers.Count - trPlayers.Count);
-        var maximumAllowedDifference = 1;
 
-        if (difference > maximumAllowedDifference)
+        if (difference > _maximumAllowedDifference)
         {
             var playersToSend = (int)Math.Round(difference / 2f);
             var teamWithMostPlayers = trPlayers.Count > ctPlayers.Count ? trPlayers : ctPlayers;
@@ -98,7 +121,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
             }
         }
         
-        return HookResult.Continue;
+        return true;
     }
 
     private void LogToConsole(string messageToLog)
