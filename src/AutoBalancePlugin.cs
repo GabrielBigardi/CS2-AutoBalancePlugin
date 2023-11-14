@@ -48,10 +48,13 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         
         if (players.Count <= 0)
             return HookResult.Continue;
+
+        var currentlyPlaying = 
+            players.FindAll(x => x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist);
         
         if (_scrambleMode)
         {
-            var shuffledPlayersList = players.OrderBy(a => Guid.NewGuid()).ToList();
+            var shuffledPlayersList = currentlyPlaying.OrderBy(a => Guid.NewGuid()).ToList();
             for (int i = 0; i < shuffledPlayersList.Count; i++)
             {
                 if(_killPlayerOnSwitch)
