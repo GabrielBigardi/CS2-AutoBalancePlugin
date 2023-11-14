@@ -9,12 +9,13 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.2.0";
+    public override string ModuleVersion => "0.2.1";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
 
     private bool _scrambleMode;
+    private bool _killPlayerOnSwitch;
     private char _pluginNameColor;
     private char _pluginMessageColor;
 
@@ -35,6 +36,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         
         this.Config = config;
         this._scrambleMode = config.ScrambleMode;
+        this._killPlayerOnSwitch = config.KillPlayerOnSwitch;
         this._pluginNameColor = config.PluginNameColor;
         this._pluginMessageColor = config.PluginMessageColor;
     }
@@ -52,7 +54,10 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
             var shuffledPlayersList = players.OrderBy(a => Guid.NewGuid()).ToList();
             for (int i = 0; i < shuffledPlayersList.Count; i++)
             {
-                shuffledPlayersList[i].ChangeTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
+                if(_killPlayerOnSwitch)
+                    shuffledPlayersList[i].ChangeTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
+                else
+                    shuffledPlayersList[i].SwitchTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
             }
 
             return HookResult.Continue;
@@ -81,8 +86,12 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
                     ? CsTeam.CounterTerrorist
                     : CsTeam.Terrorist;
                 
-                playerToSend.ChangeTeam(teamToSend);
-                LogToChatAll($"Changed \"{playerToSend.PlayerName}\" to {(CsTeam)playerToSend.TeamNum}");
+                if (_killPlayerOnSwitch)
+                    playerToSend.ChangeTeam(teamToSend);
+                else
+                    playerToSend.SwitchTeam(teamToSend);
+
+                LogToChatAll($"Switched \"{playerToSend.PlayerName}\" to {(CsTeam)playerToSend.TeamNum}");
             }
         }
         

@@ -7,6 +7,9 @@ public class AutoBalancePluginConfig : BasePluginConfig
     [JsonPropertyName("ScrambleMode")]
     public bool ScrambleMode { get; set; } = false;
     
+    [JsonPropertyName("KillPlayerOnSwitch")]
+    public bool KillPlayerOnSwitch { get; set; } = false;
+    
     [JsonPropertyName("PluginNameColor")]
     public char PluginNameColor { get; set; } = '\u0010';
     

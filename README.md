@@ -40,6 +40,17 @@ Currently there is two balancing modes, they are:
 * Magenta = '\u000E';
 * LightRed = '\u000F';
 
+## Available Configurations
+```json
+{
+  "ScrambleMode": false, // Setting that to true will make teams scramble upon auto-balance, good for retake servers
+  "KillPlayerOnSwitch": false, // Setting that to true will make player get killed when being switched
+  "PluginNameColor": "\u0010", // Unicode color for Plugin Name on chat messages
+  "PluginMessageColor": "\u0004", // Unicode color for Plugin Message on chat messages
+  "ConfigVersion": 1 // Config version, don't change
+}
+```
+
 ## Contact
 **Discord**: *Gabriel Bigardi#2292*  
 **Twitter**: *@BigardiGabriel*  
