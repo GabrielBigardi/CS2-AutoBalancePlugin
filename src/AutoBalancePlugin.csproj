@@ -13,4 +13,8 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.53" />
+  </ItemGroup>
+
 </Project>
