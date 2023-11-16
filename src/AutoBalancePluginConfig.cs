@@ -13,6 +13,9 @@ public class AutoBalancePluginConfig : BasePluginConfig
     [JsonPropertyName("BalanceOnRoundStart")]
     public bool BalanceOnRoundStart { get; set; } = false;
     
+    [JsonPropertyName("BalanceBots")]
+    public bool BalanceBots { get; set; } = true;
+    
     [JsonPropertyName("MaximumAllowedDifference")]
     public int MaximumAllowedDifference { get; set; } = 1;
     

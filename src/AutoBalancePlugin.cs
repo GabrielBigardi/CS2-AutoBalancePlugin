@@ -7,7 +7,7 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.2.2";
+    public override string ModuleVersion => "0.3.0";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
@@ -15,6 +15,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
     private bool _scrambleMode;
     private bool _killPlayerOnSwitch;
     private bool _balanceOnRoundStart;
+    private bool _balanceBots;
     private int _maximumAllowedDifference;
     private char _pluginNameColor;
     private char _pluginMessageColor;
@@ -42,6 +43,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         this._scrambleMode = config.ScrambleMode;
         this._killPlayerOnSwitch = config.KillPlayerOnSwitch;
         this._balanceOnRoundStart = config.BalanceOnRoundStart;
+        this._balanceBots = config.BalanceBots;
         this._maximumAllowedDifference = config.MaximumAllowedDifference;
         this._pluginNameColor = config.PluginNameColor;
         this._pluginMessageColor = config.PluginMessageColor;
@@ -71,12 +73,14 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         if (players.Count <= 0)
             return false;
 
-        var currentlyPlaying = 
-            players.FindAll(x => x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist);
+        var currentlyPlaying = _balanceBots 
+            ? players.FindAll(x => x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist)
+            : players.FindAll(x => (x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist) && !x.IsBot);
         
         if (_scrambleMode)
         {
             var shuffledPlayersList = currentlyPlaying.OrderBy(a => Guid.NewGuid()).ToList();
+
             for (int i = 0; i < shuffledPlayersList.Count; i++)
             {
                 if(_killPlayerOnSwitch)
@@ -88,8 +92,8 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
             return true;
         }
 
-        var ctPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.CounterTerrorist);
-        var trPlayers = players.FindAll(x => x.TeamNum == (int)CsTeam.Terrorist);
+        var ctPlayers = currentlyPlaying.FindAll(x => x.TeamNum == (int)CsTeam.CounterTerrorist);
+        var trPlayers = currentlyPlaying.FindAll(x => x.TeamNum == (int)CsTeam.Terrorist);
 
         var difference = Math.Abs(ctPlayers.Count - trPlayers.Count);
 
