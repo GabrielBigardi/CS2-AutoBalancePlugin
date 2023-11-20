@@ -49,7 +49,7 @@ OBS: {_playerName} and {_switchedTeam} are the variables for detecting the playe
   "BalanceOnRoundStart": false, // Setting that to true will make the auto-balance happen upon round start (default: on round end)
   "BalanceBots": true, // Setting that to false will prevent bots from being accounted into the auto-balance
   "MaximumAllowedDifference": 1 // Maximum players difference for the auto-balance to start working
-  "AutoBalanceMessage": " {GOLD}● [Auto Balance] {DEFAULT} -> {DEFAULT}Switched {GOLD}{_playerName} {DEFAULT}to {RED}{_switchedTeam}", // Unicode color for Plugin Name on chat messages
+  "AutoBalanceMessage": " {GOLD}● [Auto Balance] {DEFAULT} -> {DEFAULT}Switched {GOLD}{_playerName} {DEFAULT}to {RED}{_switchedTeam}", // The message that will be displayed when a player is auto-balanced
   "ConfigVersion": 1 // Config version, don't change
 }
 ```
