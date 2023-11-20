@@ -19,9 +19,6 @@ public class AutoBalancePluginConfig : BasePluginConfig
     [JsonPropertyName("MaximumAllowedDifference")]
     public int MaximumAllowedDifference { get; set; } = 1;
     
-    [JsonPropertyName("PluginNameColor")]
-    public char PluginNameColor { get; set; } = '\u0010';
-    
-    [JsonPropertyName("PluginMessageColor")]
-    public char PluginMessageColor { get; set; } = '\u0004';
+    [JsonPropertyName("AutoBalanceMessage")]
+    public string AutoBalanceMessage { get; set; } = " {GOLD}● [Auto Balance] {DEFAULT} -> {DEFAULT}Switched {GOLD}{_playerName} {DEFAULT}to {RED}{_switchedTeam}";
 }

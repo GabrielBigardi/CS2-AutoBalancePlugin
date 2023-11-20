@@ -7,7 +7,7 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.3.0";
+    public override string ModuleVersion => "0.4.0";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
@@ -17,8 +17,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
     private bool _balanceOnRoundStart;
     private bool _balanceBots;
     private int _maximumAllowedDifference;
-    private char _pluginNameColor;
-    private char _pluginMessageColor;
+    private string _autoBalanceMessage = "";
 
     public override void Load(bool hotReload)
     {
@@ -27,17 +26,17 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         else
             RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
 
-        LogToConsole(ConsoleColor.Green, $"{ModuleName} version {ModuleVersion} loaded");
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> {ModuleName} version {ModuleVersion} loaded");
     }
 
     public override void Unload(bool hotReload)
     {
-        LogToConsole(ConsoleColor.Green, $"{ModuleName} version {ModuleVersion} unloaded");
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> {ModuleName} version {ModuleVersion} unloaded");
     }
     
     public void OnConfigParsed(AutoBalancePluginConfig config)
     {
-        LogToConsole(ConsoleColor.Green, $"Loading config file");
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Loading config file");
         
         this.Config = config;
         this._scrambleMode = config.ScrambleMode;
@@ -45,13 +44,12 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         this._balanceOnRoundStart = config.BalanceOnRoundStart;
         this._balanceBots = config.BalanceBots;
         this._maximumAllowedDifference = config.MaximumAllowedDifference;
-        this._pluginNameColor = config.PluginNameColor;
-        this._pluginMessageColor = config.PluginMessageColor;
+        this._autoBalanceMessage = config.AutoBalanceMessage;
     }
     
     private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        LogToConsole(ConsoleColor.Green, $"Round ended, trying auto-balance");
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round ended, trying auto-balance");
         TryAutoBalance();
 
         return HookResult.Continue;
@@ -59,7 +57,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
 
     private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        LogToConsole(ConsoleColor.Green, $"Round started, trying auto-balance");
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round started, trying auto-balance");
 
         TryAutoBalance();
 
@@ -104,9 +102,9 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
             var shuffledTeamPlayers = teamWithMostPlayers.OrderBy(a => Guid.NewGuid()).ToList().GetRange(0, playersToSend);
             
             if(teamWithMostPlayers == trPlayers)
-                LogToConsole(ConsoleColor.Green, $"Sending {playersToSend} players to the CT Team");
+                LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the CT Team");
             else if(teamWithMostPlayers == ctPlayers)
-                LogToConsole(ConsoleColor.Green, $"Sending {playersToSend} players to the TR Team");
+                LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the TR Team");
 
             foreach (var playerToSend in shuffledTeamPlayers)
             {
@@ -114,37 +112,23 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
                     ? CsTeam.CounterTerrorist
                     : CsTeam.Terrorist;
                 
+                var teamAbbreviation = (CsTeam)playerToSend.TeamNum == CsTeam.Terrorist ? "T" :
+                    (CsTeam)playerToSend.TeamNum == CsTeam.CounterTerrorist ? "CT"
+                    : "Unknown";
+                
                 if (_killPlayerOnSwitch)
                     playerToSend.ChangeTeam(teamToSend);
                 else
                     playerToSend.SwitchTeam(teamToSend);
 
-                LogToChatAll($"Switched \"{playerToSend.PlayerName}\" to {(CsTeam)playerToSend.TeamNum}");
+                _autoBalanceMessage = _autoBalanceMessage.Replace("{_playerName}", playerToSend.PlayerName);
+                _autoBalanceMessage = _autoBalanceMessage.Replace("{_switchedTeam}", teamAbbreviation);
+
+                
+                LogHelper.LogToChatAll(_autoBalanceMessage.ReplaceTags());
             }
         }
         
         return true;
-    }
-
-    private void LogToConsole(string messageToLog)
-    {
-        Console.WriteLine($"[{ModuleName}] -> {messageToLog}");
-    }
-    
-    private void LogToConsole(ConsoleColor color, string messageToLog)
-    {
-        Console.ForegroundColor = color;
-        Console.WriteLine($"[{ModuleName}] -> {messageToLog}");
-        Console.ResetColor();
-    }
-    
-    private void LogToChat(CCSPlayerController? player, string messageToLog)
-    {
-        player?.PrintToChat($"[{ModuleName}] -> {messageToLog}");
-    }
-    
-    private void LogToChatAll(string messageToLog)
-    {
-        Server.PrintToChatAll($" {_pluginNameColor}● [{ModuleName}] {ChatColors.Default} -> {_pluginMessageColor}{messageToLog}");
     }
 }
