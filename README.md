@@ -17,28 +17,29 @@ Currently there is two balancing modes, they are:
 1 - Open the config file.  
 2 - Change the variable "ScrambleMode" to 0 for default mode or 1 for scramble mode.
 
-## Changing default colors
+## Changing default message (colors and formatting)
 1 - Open the config file.  
-2 - Change the variables "PluginNameColor" and "PluginMessageColor" to one of the available ones, here's the available color codes:
-* Default = '\u0001';
-* White = '\u0001';
-* Darkred = '\u0002';
-* Green = '\u0004';
-* LightYellow = '\u0003';
-* LightBlue = '\u0003';
-* Olive = '\u0005';
-* Lime = '\u0006';
-* Red = '\a';
-* Purple = '\u0003';
-* Grey = '\b';
-* Yellow = '\t';
-* Gold = '\u0010';
-* Silver = '\n';
-* Blue = '\v';
-* DarkBlue = '\f';
-* BlueGrey = '\r';
-* Magenta = '\u000E';
-* LightRed = '\u000F';
+2 - To change colors, change the variable "AutoBalanceMessage" as you like, here's the available color codes:  
+* {DEFAULT}
+* {WHITE}
+* {DARKRED}
+* {GREEN}
+* {LIGHTYELLOW}
+* {LIGHTBLUE}
+* {OLIVE}
+* {LIME}
+* {RED}
+* {PURPLE}
+* {GREY}
+* {YELLOW}
+* {GOLD}
+* {SILVER}
+* {BLUE}
+* {DARKBLUE}
+* {BLUEGREY}
+* {MAGENTA}
+* {LIGHTRED}  
+OBS: {_playerName} and {_switchedTeam} are the variables for detecting the player name and team it was switched to, you can remove if you wan't.
 
 ## Available Configurations
 ```json
@@ -48,8 +49,7 @@ Currently there is two balancing modes, they are:
   "BalanceOnRoundStart": false, // Setting that to true will make the auto-balance happen upon round start (default: on round end)
   "BalanceBots": true, // Setting that to false will prevent bots from being accounted into the auto-balance
   "MaximumAllowedDifference": 1 // Maximum players difference for the auto-balance to start working
-  "PluginNameColor": "\u0010", // Unicode color for Plugin Name on chat messages
-  "PluginMessageColor": "\u0004", // Unicode color for Plugin Message on chat messages
+  "AutoBalanceMessage": " {GOLD}● [Auto Balance] {DEFAULT} -> {DEFAULT}Switched {GOLD}{_playerName} {DEFAULT}to {RED}{_switchedTeam}", // Unicode color for Plugin Name on chat messages
   "ConfigVersion": 1 // Config version, don't change
 }
 ```
