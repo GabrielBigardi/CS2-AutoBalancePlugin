@@ -7,7 +7,7 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.4.0";
+    public override string ModuleVersion => "0.4.1";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
@@ -121,11 +121,11 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
                 else
                     playerToSend.SwitchTeam(teamToSend);
 
-                _autoBalanceMessage = _autoBalanceMessage.Replace("{_playerName}", playerToSend.PlayerName);
-                _autoBalanceMessage = _autoBalanceMessage.Replace("{_switchedTeam}", teamAbbreviation);
+                var tempAutoBalanceMessage = _autoBalanceMessage.Replace("{_playerName}", playerToSend.PlayerName);
+                tempAutoBalanceMessage = tempAutoBalanceMessage.Replace("{_switchedTeam}", teamAbbreviation);
 
                 
-                LogHelper.LogToChatAll(_autoBalanceMessage.ReplaceTags());
+                LogHelper.LogToChatAll(tempAutoBalanceMessage.ReplaceTags());
             }
         }
         
