@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AutoBalancePlugin;
@@ -7,7 +8,7 @@ namespace AutoBalancePlugin;
 public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConfig>
 {
     public override string ModuleName => "Auto Balance Plugin";
-    public override string ModuleVersion => "0.4.1";
+    public override string ModuleVersion => "0.4.2";
     public override string ModuleAuthor => "hTx";
     
     public AutoBalancePluginConfig Config { get; set; } = new();
@@ -21,17 +22,46 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
 
     public override void Load(bool hotReload)
     {
-        if(_balanceOnRoundStart)
-            RegisterEventHandler<EventRoundStart>(OnRoundStart);
-        else
-            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
-
         LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> {ModuleName} version {ModuleVersion} loaded");
     }
 
     public override void Unload(bool hotReload)
     {
         LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> {ModuleName} version {ModuleVersion} unloaded");
+    }
+
+    [GameEventHandler(HookMode.Post)]
+    public HookResult OnPlayerConnect(EventPlayerConnect @event, GameEventInfo info)
+    {
+        LogHelper.LogToConsole(ConsoleColor.Green, "Player Connect test");
+        
+        return HookResult.Continue;
+    }
+    
+    [GameEventHandler(HookMode.Post)]
+    public HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
+    {
+        if(_balanceOnRoundStart)
+            return HookResult.Continue;
+            
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round ended, trying auto-balance");
+        
+        TryAutoBalance();
+        
+        return HookResult.Continue;
+    }
+    
+    [GameEventHandler(HookMode.Post)]
+    public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        if(!_balanceOnRoundStart)
+            return HookResult.Continue;
+        
+        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round started, trying auto-balance");
+        
+        TryAutoBalance();
+        
+        return HookResult.Continue;
     }
     
     public void OnConfigParsed(AutoBalancePluginConfig config)
@@ -46,30 +76,13 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
         this._maximumAllowedDifference = config.MaximumAllowedDifference;
         this._autoBalanceMessage = config.AutoBalanceMessage;
     }
-    
-    private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
-    {
-        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round ended, trying auto-balance");
-        TryAutoBalance();
 
-        return HookResult.Continue;
-    }
-
-    private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
-    {
-        LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Round started, trying auto-balance");
-
-        TryAutoBalance();
-
-        return HookResult.Continue;
-    }
-
-    private bool TryAutoBalance()
+    private void TryAutoBalance()
     {
         var players = Utilities.GetPlayers();
         
         if (players.Count <= 0)
-            return false;
+            return;
 
         var currentlyPlaying = _balanceBots 
             ? players.FindAll(x => x.TeamNum is (int)CsTeam.CounterTerrorist or (int)CsTeam.Terrorist)
@@ -87,7 +100,7 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
                     shuffledPlayersList[i].SwitchTeam(i % 2 == 0 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
             }
 
-            return true;
+            return;
         }
 
         var ctPlayers = currentlyPlaying.FindAll(x => x.TeamNum == (int)CsTeam.CounterTerrorist);
@@ -95,40 +108,38 @@ public class AutoBalancePlugin : BasePlugin, IPluginConfig<AutoBalancePluginConf
 
         var difference = Math.Abs(ctPlayers.Count - trPlayers.Count);
 
-        if (difference > _maximumAllowedDifference)
-        {
-            var playersToSend = (int)Math.Round(difference / 2f);
-            var teamWithMostPlayers = trPlayers.Count > ctPlayers.Count ? trPlayers : ctPlayers;
-            var shuffledTeamPlayers = teamWithMostPlayers.OrderBy(a => Guid.NewGuid()).ToList().GetRange(0, playersToSend);
-            
-            if(teamWithMostPlayers == trPlayers)
-                LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the CT Team");
-            else if(teamWithMostPlayers == ctPlayers)
-                LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the TR Team");
+        if (difference <= _maximumAllowedDifference)
+            return;
 
-            foreach (var playerToSend in shuffledTeamPlayers)
-            {
-                var teamToSend = playerToSend.TeamNum == (int)CsTeam.Terrorist
-                    ? CsTeam.CounterTerrorist
-                    : CsTeam.Terrorist;
-                
-                var teamAbbreviation = (CsTeam)playerToSend.TeamNum == CsTeam.Terrorist ? "T" :
-                    (CsTeam)playerToSend.TeamNum == CsTeam.CounterTerrorist ? "CT"
-                    : "Unknown";
-                
-                if (_killPlayerOnSwitch)
-                    playerToSend.ChangeTeam(teamToSend);
-                else
-                    playerToSend.SwitchTeam(teamToSend);
-
-                var tempAutoBalanceMessage = _autoBalanceMessage.Replace("{_playerName}", playerToSend.PlayerName);
-                tempAutoBalanceMessage = tempAutoBalanceMessage.Replace("{_switchedTeam}", teamAbbreviation);
-
-                
-                LogHelper.LogToChatAll(tempAutoBalanceMessage.ReplaceTags());
-            }
-        }
+        var playersToSend = (int)Math.Round(difference / 2f);
+        var teamWithMostPlayers = trPlayers.Count > ctPlayers.Count ? trPlayers : ctPlayers;
+        var shuffledTeamPlayers = teamWithMostPlayers.OrderBy(a => Guid.NewGuid()).ToList().GetRange(0, playersToSend);
         
-        return true;
+        if(teamWithMostPlayers == trPlayers)
+            LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the CT Team");
+        else if(teamWithMostPlayers == ctPlayers)
+            LogHelper.LogToConsole(ConsoleColor.Green, $"[Auto Balance Plugin] -> Sending {playersToSend} players to the TR Team");
+
+        foreach (var playerToSend in shuffledTeamPlayers)
+        {
+            var teamToSend = playerToSend.TeamNum == (int)CsTeam.Terrorist
+                ? CsTeam.CounterTerrorist
+                : CsTeam.Terrorist;
+            
+            var teamAbbreviation = (CsTeam)playerToSend.TeamNum == CsTeam.Terrorist ? "T" :
+                (CsTeam)playerToSend.TeamNum == CsTeam.CounterTerrorist ? "CT"
+                : "Unknown";
+            
+            if (_killPlayerOnSwitch)
+                playerToSend.ChangeTeam(teamToSend);
+            else
+                playerToSend.SwitchTeam(teamToSend);
+
+            var tempAutoBalanceMessage = _autoBalanceMessage.Replace("{_playerName}", playerToSend.PlayerName);
+            tempAutoBalanceMessage = tempAutoBalanceMessage.Replace("{_switchedTeam}", teamAbbreviation);
+
+            
+            LogHelper.LogToChatAll(tempAutoBalanceMessage.ReplaceTags());
+        }
     }
 }
